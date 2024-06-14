@@ -48,6 +48,24 @@ class Messenger():
         r = requests.post(self._url, headers=header, json=payload, timeout=10)
         return r.json()
     
+    def get_url_attachment(self, data: dict):
+        try:
+            return data['entry'][0]['messaging'][0]['message']['attachments'][0]["payload"]["url"]
+        except (IndexError, KeyError) as e:
+            print(f"Error accessing url attachment: {e}")
+            return None
+    
+    def download_attachment(self, attachment_url: str, path_dest: str):
+        response = requests.get(attachment_url, stream=True, timeout=10)
+        if response.status_code == 200:
+            with open(path_dest, 'wb') as file:
+                for chunk in response.iter_content(1024):
+                    file.write(chunk)
+
+            print('Downloaded attachment successfully!')
+        else:
+            print('Error downloading attachment')
+    
     def send_quick_reply(self, sender_id, message: str, quick_replies: list):
         if len(quick_replies) > 13:
             print("Quick replies should be less than 13")
