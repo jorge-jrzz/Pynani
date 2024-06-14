@@ -1,7 +1,7 @@
 class QuickReply():
-    def _quick_button(self, text: str, image_url: str = None, payload: str = "<POSTBACK_PAYLOAD>", content_type: str = "text") -> dict:
+    def _quick_button(self, text: str, payload: str = "<POSTBACK_PAYLOAD>", image_url: str = None) -> dict:
         return {
-            "content_type": content_type,
+            "content_type": "text",
             "title": text,
             "payload": payload, 
             "image_url": image_url if image_url else "",
@@ -26,7 +26,6 @@ class QuickReply():
         if len(buttons) > 13:
             print("Quick replies should be less than 13")
             buttons = buttons[:13]
-
         for b in buttons:
             if not isinstance(b, dict):
                 raise ValueError("Each button should be a dictionary")
@@ -36,12 +35,8 @@ class QuickReply():
         return r_buttons
     
 
-# qq = QuickReply()
-# l = ["1", "2", "3"]
-# t = [{"text": "1", "image_url": "https://www.google.com"}, {"text": "2", "image_url": "https://www.google.com"}]
-# # print(qq.)
-# print("----")
-# print(qq.quick_buttons(l))
-# print("----")
-# print(qq.quick_buttons_image(t))
-
+# botones = ['pedro', 'juan', 'popo']
+# b_imagen = [{"text": "1", "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Solid_red.png"}, 
+#        {"text": "2", "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Solid_red.png"}]
+# sb = qui.quick_buttons(botones)
+# cb = qui.quick_buttons_image(b_imagen)
