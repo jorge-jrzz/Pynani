@@ -1,3 +1,5 @@
+from pathlib import Path
+import mimetypes
 import requests
 
 
@@ -23,6 +25,26 @@ class Messenger():
             return data['entry'][0]['messaging'][0]['sender']['id']
         except (IndexError, KeyError) as e:
             print(f"Error accessing sender ID: {e}")
+            return None
+        
+    def get_message_type(self, data: dict):
+        try:
+            message_type = data['entry'][0]['messaging'][0]['message']
+            if 'text' in message_type:
+                if 'attachments' in message_type:
+                    if message_type['attachments'][0]['type'] == 'fallback':
+                        return 'link'
+                return 'text'
+            elif 'attachments' in message_type:
+                attachment_type = message_type['attachments'][0]['type']
+                if 'image' in attachment_type:
+                    if 'sticker_id' in message_type['attachments'][0]['payload']:
+                        return 'sticker'
+                    return 'image'
+                else:
+                    return attachment_type
+        except (IndexError, KeyError) as e:
+            print(f"Error accessing message type: {e}")
             return None
         
     def get_message_text(self, data: dict):
@@ -67,7 +89,7 @@ class Messenger():
                   "Authorization": f"Bearer {self.access_token}"}
         payload = {
             "recipient":{
-                "id":"24781539028157613"
+                "id": sender_id
             },
             "messaging_type": "RESPONSE",
             "message": {
@@ -82,6 +104,31 @@ class Messenger():
         }
         
         r = requests.post(self._url, headers=header, json=payload, timeout=10)
+        return r.json()
+    
+    def send_local_attachment(self, sender_id: str, attachment_type: str, attachment_path: str):
+        attachment = Path(attachment_path)
+        mimetype, _ = mimetypes.guess_type(attachment) 
+        recipient = {"id": sender_id}
+        message = {
+                "attachment": {
+                    "type": attachment_type, 
+                    "payload": {
+                        "is_reusable": "true"
+                    }
+                }
+            }
+        
+        header = {"Authorization": f"Bearer {self.access_token}"}
+        body = {
+            "recipient": str(recipient),
+            "message": str(message)
+        }
+        file = {
+            "filedata": (attachment.name, attachment.open('rb'), mimetype)
+        }
+
+        r = requests.post(self._url, headers=header, data=body, files=file, timeout=10)
         return r.json()
     
     def download_attachment(self, attachment_url: str, path_dest: str):
