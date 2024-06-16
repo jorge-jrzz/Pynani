@@ -1,9 +1,9 @@
 from flask import Flask, request, jsonify
-from Pynani import Messenger, QuickReply
+from pynani import Messenger
 
-PAGE_ACCESS_TOKEN = 'EAAL4nnkuqAcBO0indBj1Q48sSf0TYZBu5KQYaKd4mvdAvjRn8IRsZCdZBVECTQZCGhgYBWQ2gdZAFokWw5PFDUo63mQ0f1pbr5zmLnmVWczOEKJcTX4ZCuZBzKDGWIBHDGoa6Qsa1ydvU1L7ZAHhtlEfToLHRUiZCHkfMXrqYPBCyvcdgXI9ncmeSbSnh3w7k7lM7'
+PAGE_ACCESS_TOKEN = 'EAAL4nnkuqAcBO2quTrQj1ZCvCQU8owp5BBTSrJqh5clzX0gwHZADGTLQrvY6jGDoYW3ZBg8Y92lUR04YzaTow2ecjZCeeYJ1Vd8OM29t2wQi6eI8LpDlHZBxh24A2b1ZCdIaHs2lXyuTepOluyoIbaQNC7LSMueH9sB5twJoQXqlRF7pVkb5cMZBPzOZAR9lMAmd'
 app = Flask(__name__)
-mess = Messenger.Messenger(PAGE_ACCESS_TOKEN)
+mess = Messenger(PAGE_ACCESS_TOKEN)
 
 @app.route("/", methods=['GET'])
 def meta_verify():
