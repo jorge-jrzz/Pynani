@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pynani"
+version = "1.0.0"
+description = "A package to wrap the Messenger API"
+readme = "README.md"
+authors = [
+    { name = "Jorge Juarez", email = "jorgeang33@gmail.com" },
+]
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests>=2.32.3",
+]
+[project.urls]
+"Homepage" = "https://github.com/jorge-jrzz/Pynani/tree/main"
