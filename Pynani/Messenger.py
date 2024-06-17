@@ -49,7 +49,12 @@ class Messenger():
         
     def get_message_text(self, data: dict):
         try:
-            return data['entry'][0]['messaging'][0]['message']['text']
+            message = data['entry'][0]['messaging'][0]
+            if 'message' in message:
+                # print("Hola?")
+                return message['message']['text']
+            elif 'postback' in message:
+                return message['postback']['title']
         except (IndexError, KeyError) as e:
             print(f"Error accessing message text: {e}")
             return None
@@ -156,6 +161,29 @@ class Messenger():
             "message": {
                 "text": message,
                 "quick_replies": quick_replies
+            }
+        }
+
+        r = requests.post(self._url, headers=header, json=payload, timeout=10)
+        return r.json()
+    
+    def send_button_template(self, sender_id: str, message: str, buttons: list):
+        header = {"Content-Type": "application/json",
+                  "Authorization": f"Bearer {self.access_token}"}
+        payload = {
+            "recipient": {
+                "id": sender_id
+            },
+            "messaging_type": "RESPONSE",
+            "message": {
+                "attachment": {
+                    "type": "template",
+                    "payload": {
+                        "template_type": "button",
+                        "text": message,
+                        "buttons": buttons
+                    }
+                }
             }
         }
 
