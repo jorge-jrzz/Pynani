@@ -1,5 +1,5 @@
 class QuickReply():
-    def _quick_button(self, text: str, payload: str = "<POSTBACK_PAYLOAD>", image_url: str = None) -> dict:
+    def __make_quick_button(self, text: str, payload: str = "<POSTBACK_PAYLOAD>", image_url: str = None) -> dict:
         return {
             "content_type": "text",
             "title": text,
@@ -17,7 +17,7 @@ class QuickReply():
             if not isinstance(b, str):
                 raise ValueError("Each button should be a string")
             else:
-                r_buttons.append(self._quick_button(b))
+                r_buttons.append(self.__make_quick_button(b))
 
         return r_buttons
     
@@ -30,7 +30,7 @@ class QuickReply():
             if not isinstance(b, dict):
                 raise ValueError("Each button should be a dictionary")
             else:
-                r_buttons.append(self._quick_button(**b))
+                r_buttons.append(self.__make_quick_button(**b))
 
         return r_buttons
     

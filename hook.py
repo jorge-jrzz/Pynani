@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify
-from pynani import Messenger
+from pynani import Messenger, Buttons
 
-PAGE_ACCESS_TOKEN = 'EAAL4nnkuqAcBOZBzqEKtz4CUlGWBKDA6TntcHCiDRzo6xOteZA9qbei8fZBPpJuuO0aup5wZARLVZBcZBpkdEkJ9andibZBuxB7lTGaN6y064oAZAyV3ZB0fMuODe9ZB076BI6G529Id5Duo9gZCTYjWAWon86sveljMDQMXlhqyFZAtnTnErFDbbkllyOddG5IZBLCuG'
+PAGE_ACCESS_TOKEN = 'EAAOLpXLMAJABOwQ1aZCZAx8ksfLkia8fxmzkfJDFNzgB0A8pEzwAMLrlZCpv8VgS8Y58Cmimm9nlEA4x6pt8jaFlBEBdYXNT5FTfUgKcLu1Iqj9PzQR4jJE3PAwbjghWXSe2DsKDTyYZBxn26U78AO6FsBcrFYebZBvIZC1ZAfM4xN8aXPeRQdYY1jo8kXtShoG'
 app = Flask(__name__)
 mess = Messenger(PAGE_ACCESS_TOKEN)
+b = Buttons()
 
 @app.route("/", methods=['GET'])
 def meta_verify():
@@ -11,15 +12,17 @@ def meta_verify():
 
 @app.route("/", methods=['POST'])
 def meta_webhook():
+    print("Algo paso!!!")
     data = request.get_json()
-    mt = mess.get_message_type(data)
-    print(f"\n\n\nData received: \n{data}\nTipo del mensaje:{mt}\n\n")
+    mensaje = mess.get_message_text(data)
+    print(mensaje)
     sender_id = mess.get_sender_id(data)
-    print(f"Sender ID: {sender_id}")
-    # mess.send_text_message(sender_id, "🔥")
-    print("enviando archivo\n\n")
-    reee = mess.send_local_attachment(sender_id, 'audio', '/Users/jorge-jrzz/Desktop/English/2 week/day 1/audio.m4a')
-    print(f"Respuesta de envio de archivo: {reee}")
+    if mensaje == "botones simples":
+        botones = b.basic_buttons(["Opción 1", "Opción 2", "🔥"])
+        mess.send_button_template(sender_id, "Hola, ¿qué deseas hacer?", botones)
+    elif mensaje == "botones complicados":
+        cb = b.leave_buttons([{'title': 'Opción 1', 'url': 'https://www.google.com'}, {'title': 'Opción 2', 'call_number': '+525555555555'}])
+        mess.send_button_template(sender_id, "Hola, ¿qué deseas hacer?", cb)
     return jsonify({"status": "success"}), 200
 
 if __name__ =='__main__':
