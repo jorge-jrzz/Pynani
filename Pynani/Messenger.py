@@ -28,14 +28,17 @@ class Messenger():
             return None
         
     def get_message_type(self, data: dict):
+        messaging = data['entry'][0]['messaging'][0]
         try:
-            message_type = data['entry'][0]['messaging'][0]['message']
+            if 'postback' in messaging:
+                return 'postback'
+            message_type = messaging['message']
             if 'text' in message_type:
                 if 'attachments' in message_type:
                     if message_type['attachments'][0]['type'] == 'fallback':
                         return 'link'
                 return 'text'
-            elif 'attachments' in message_type:
+            if 'attachments' in message_type:
                 attachment_type = message_type['attachments'][0]['type']
                 if 'image' in attachment_type:
                     if 'sticker_id' in message_type['attachments'][0]['payload']:
@@ -74,6 +77,36 @@ class Messenger():
 
         r = requests.post(self._url, headers=header, json=payload, timeout=10)
         return r.json()
+    
+    def upload_attachment(self, attachment_type: str, attachment_path: str) -> str:
+        attachments_url = f"https://graph.facebook.com/v20.0/{self.page_id}/message_attachments"
+        attachment = Path(attachment_path)
+        mimetype, _ = mimetypes.guess_type(attachment)
+
+        header = {
+            "Authorization": f"Bearer {self.access_token}"
+        }
+        message = {
+            "attachment": {
+                "type": attachment_type,
+                "payload": {
+                    "is_reusable": "true"
+                }
+            }
+        }
+        file = {
+                "filedata": (attachment.name, attachment.open('rb'), mimetype)
+            }    
+        body = {"message": str(message)}    
+
+        r = requests.post(attachments_url, headers=header, files=file, data=body, timeout=20)
+        
+        try :
+            attachment_id = r.json()["attachment_id"]
+            return attachment_id
+        except KeyError as e:
+            print(f"Error uploading attachment: {e}")
+            return None
     
     def get_url_attachment(self, data: dict):
         try:
