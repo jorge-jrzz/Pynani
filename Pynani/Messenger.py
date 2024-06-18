@@ -1,3 +1,4 @@
+from typing import Union, Optional
 from pathlib import Path
 import mimetypes
 import requests
@@ -62,7 +63,7 @@ class Messenger():
             print(f"Error accessing message text: {e}")
             return None
 
-    def send_text_message(self, sender_id, message):
+    def send_text_message(self, sender_id, message: Union[str, int]):
         header = {"Content-Type": "application/json",
                   "Authorization": f"Bearer {self.access_token}"}
         payload = {
@@ -74,9 +75,14 @@ class Messenger():
                 "text": message
             }
         }
-
-        r = requests.post(self._url, headers=header, json=payload, timeout=10)
-        return r.json()
+        
+        try: 
+            r = requests.post(self._url, headers=header, json=payload, timeout=10)
+            r.raise_for_status()
+            return r.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e} \n{r.json()}")
+            return None
     
     def upload_attachment(self, attachment_type: str, attachment_path: str) -> str:
         attachments_url = f"https://graph.facebook.com/v20.0/{self.page_id}/message_attachments"
@@ -221,4 +227,32 @@ class Messenger():
         }
 
         r = requests.post(self._url, headers=header, json=payload, timeout=10)
+        return r.json()
+    
+    def send_media_template(self, sender_id: str, media_type: str, attachment_id: str, buttons: list):
+        header = {"Content-Type": "application/json",
+                  "Authorization": f"Bearer {self.access_token}"}
+        body = {
+            "recipient": {
+                "id": sender_id
+            },
+            "messaging_type": "RESPONSE",
+            "message": {
+                "attachment": {
+                    "type": "template",
+                    "payload": {
+                        "template_type": "media",
+                        "elements": [
+                            {
+                                "media_type": media_type,
+                                "attachment_id": attachment_id,
+                                "buttons": buttons
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+        r = requests.post(self._url, headers=header, json=body, timeout=10)
         return r.json()
