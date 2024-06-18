@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from pynani import Messenger, Buttons
 
-PAGE_ACCESS_TOKEN = 'EAAL4nnkuqAcBO5fAYBI0Pjivv9UHsrM1mK4ey4wxOZBwYY26LMsZBgjycfxTfzCsCOiEob0ApK9Ma43PLUDK7QupzVZC2AoYQFCbqmiZAwVhRVtOANsoTSrRstHdxPYw5qIUZBzG434BfgtWv1OG9Sgt3oidS5naplkkDAr2qqBvDI0Poo0rIo1Ss206Rb7zk'
+PAGE_ACCESS_TOKEN = 'EAAL4nnkuqAcBO7WJZBbXWineRCJaQv3yvPL3DfzQyrmV6PiUNYrTxxHuZC7S3bWC2fnzGwaxNR5uPJ4OhuEOKpvBensrlHPId6pXHdOZBw4J70RC1jgRhhp9137TgoGRSlpZAdZCHAeBwmloZBqGWNmLUv9CPkHYUY6iIqx23SuOQu1sdghVOnmjSDr0qBc9ol'
 app = Flask(__name__)
 mess = Messenger(PAGE_ACCESS_TOKEN)
 b = Buttons()
@@ -19,6 +19,8 @@ def meta_webhook():
     # print(mensaje)
     # print(mess.get_message_type(data))
     sender_id = mess.get_sender_id(data)
+    if mensaje == "hola":
+        mess.send_text_message(sender_id, ["Hola", "¿Cómo estás?"])
     if mensaje == "botones simples":
         botones = b.basic_buttons(["Opción 1", "Opción 2", "🔥"])
         mess.send_button_template(sender_id, "Hola, ¿qué deseas hacer?", botones)
