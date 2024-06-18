@@ -1,0 +1,48 @@
+name: Copy files to deploy branch
+
+on:
+  push:
+    branches:
+      - main  # Rama principal
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout main branch
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        ref: main
+
+    - name: Copy files
+      run: |
+        mkdir -p deployment_directory/pynani
+        cp -r pynani deployment_directory/pynani
+        cp pyproject.toml deployment_directory/
+        cp README.md deployment_directory/
+        cp LICENSE deployment_directory/
+        cp .gitignore deployment_directory/
+
+    - name: Checkout deployment branch
+      run: |
+        git checkout deployment-branch
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "jorge-jrzz"
+        git config --global user.email "jorgeang33@gmail.com"
+
+    - name: Copy to Deploy Branch
+      run: |
+        cp -r deployment_directory/* .
+        rm -rf deployment_directory
+        git add .
+
+    - name: Commit and push changes
+      env:
+        ACTIONS_DEPLOY_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
+      run: |
+        git commit -m "🚀 Deploy files" || echo "No changes to commit"
+        git push https://x-access-token:${{ secrets.ACTIONS_DEPLOY_TOKEN }}@github.com/jorge-jrzz/Pynani.git deployment-branch
