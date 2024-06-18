@@ -22,7 +22,7 @@ jobs:
     - name: Copy files
       run: |
         mkdir -p deployment_directory/pynani
-        cp -r pynani deployment_directory/pynani
+        cp -r Pynani deployment_directory/pynani
         cp pyproject.toml deployment_directory/
         cp README.md deployment_directory/
         cp LICENSE deployment_directory/
