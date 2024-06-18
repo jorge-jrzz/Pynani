@@ -256,3 +256,47 @@ class Messenger():
 
         r = requests.post(self._url, headers=header, json=body, timeout=10)
         return r.json()
+    
+    def send_generic_template(self, sender_id: str, title: str, image_url: Optional[str] = None, default_url: Optional[str] = None, subtitle: Optional[str] = None, buttons: Optional[list] = None):
+        if default_url:
+            default_action = {
+                "type": "web_url",
+                "url": default_url,
+                "messenger_extensions": "false",
+                "webview_height_ratio": "tall"
+            }
+        else:
+            default_action = None
+
+        header = {"Content-Type": "application/json",
+                "Authorization": f"Bearer {self.access_token}"}
+        body = {
+            "recipient": {
+                "id": sender_id
+            },
+            "message": {
+                "attachment": {
+                    "type": "template",
+                    "payload": {
+                        "template_type": "generic",
+                        "elements": [
+                            {
+                                "title": title,
+                                "image_url": image_url if image_url else "",
+                                "subtitle": subtitle if subtitle else "",
+                                "default_action": default_action,
+                                "buttons": buttons if buttons else []
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        
+        try:
+            r = requests.post(self._url, headers=header, json=body, timeout=10)
+            r.raise_for_status()
+            return r.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e} \n{r.json()}")
+            return None
