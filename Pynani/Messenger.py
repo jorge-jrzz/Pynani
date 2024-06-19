@@ -27,7 +27,7 @@ class Messenger():
         except (IndexError, KeyError) as e:
             print(f"Error accessing sender ID: {e}")
             return None
-        
+
     def get_message_type(self, data: dict):
         messaging = data['entry'][0]['messaging'][0]
         try:
@@ -50,7 +50,7 @@ class Messenger():
         except (IndexError, KeyError) as e:
             print(f"Error accessing message type: {e}")
             return None
-        
+
     def get_message_text(self, data: dict):
         try:
             message = data['entry'][0]['messaging'][0]
@@ -75,17 +75,19 @@ class Messenger():
                 "text": message
             }
         }
-        
-        try: 
-            r = requests.post(self._url, headers=header, json=payload, timeout=10)
+
+        try:
+            r = requests.post(self._url, headers=header,
+                              json=payload, timeout=10)
             r.raise_for_status()
             return r.json()
         except requests.exceptions.RequestException as e:
             print(f"Request failed: {e} \n{r.json()}")
             return None
-    
+
     def upload_attachment(self, attachment_type: str, attachment_path: str) -> str:
-        attachments_url = f"https://graph.facebook.com/v20.0/{self.page_id}/message_attachments"
+        attachments_url = f"https://graph.facebook.com/v20.0/{
+            self.page_id}/message_attachments"
         attachment = Path(attachment_path)
         mimetype, _ = mimetypes.guess_type(attachment)
 
@@ -101,68 +103,69 @@ class Messenger():
             }
         }
         file = {
-                "filedata": (attachment.name, attachment.open('rb'), mimetype)
-            }    
-        body = {"message": str(message)}    
+            "filedata": (attachment.name, attachment.open('rb'), mimetype)
+        }
+        body = {"message": str(message)}
 
-        r = requests.post(attachments_url, headers=header, files=file, data=body, timeout=20)
-        
-        try :
+        r = requests.post(attachments_url, headers=header,
+                          files=file, data=body, timeout=20)
+
+        try:
             attachment_id = r.json()["attachment_id"]
             return attachment_id
         except KeyError as e:
             print(f"Error uploading attachment: {e}")
             return None
-    
+
     def get_url_attachment(self, data: dict):
         try:
             return data['entry'][0]['messaging'][0]['message']['attachments'][0]["payload"]["url"]
         except (IndexError, KeyError) as e:
             print(f"Error accessing attachment url: {e}")
             return None
-        
+
     def get_attachment_type(self, data: dict):
         try:
             return data['entry'][0]['messaging'][0]['message']['attachments'][0]["type"]
         except (IndexError, KeyError) as e:
             print(f"Error accessing attachment type: {e}")
             return None
-        
+
     def send_attachment(self, sender_id: str, attachment_type: str, attachment_url: str):
         header = {"Content-Type": "application/json",
                   "Authorization": f"Bearer {self.access_token}"}
         payload = {
-            "recipient":{
+            "recipient": {
                 "id": sender_id
             },
             "messaging_type": "RESPONSE",
             "message": {
                 "attachment": {
-                "type": attachment_type, 
-                "payload": {
-                    "url": attachment_url,
-                    "is_reusable": True
-                }
-                }
-            }
-        }
-        
-        r = requests.post(self._url, headers=header, json=payload, timeout=10)
-        return r.json()
-    
-    def send_local_attachment(self, sender_id: str, attachment_type: str, attachment_path: str):
-        attachment = Path(attachment_path)
-        mimetype, _ = mimetypes.guess_type(attachment) 
-        recipient = {"id": sender_id}
-        message = {
-                "attachment": {
-                    "type": attachment_type, 
+                    "type": attachment_type,
                     "payload": {
-                        "is_reusable": "true"
+                        "url": attachment_url,
+                        "is_reusable": True
                     }
                 }
             }
-        
+        }
+
+        r = requests.post(self._url, headers=header, json=payload, timeout=10)
+        return r.json()
+
+    def send_local_attachment(self, sender_id: str, attachment_type: str, attachment_path: str):
+        attachment = Path(attachment_path)
+        mimetype, _ = mimetypes.guess_type(attachment)
+        recipient = {"id": sender_id}
+        message = {
+            "attachment": {
+                "type": attachment_type,
+                "payload": {
+                    "is_reusable": "true"
+                }
+            }
+        }
+
         header = {"Authorization": f"Bearer {self.access_token}"}
         body = {
             "recipient": str(recipient),
@@ -172,9 +175,10 @@ class Messenger():
             "filedata": (attachment.name, attachment.open('rb'), mimetype)
         }
 
-        r = requests.post(self._url, headers=header, data=body, files=file, timeout=10)
+        r = requests.post(self._url, headers=header,
+                          data=body, files=file, timeout=10)
         return r.json()
-    
+
     def download_attachment(self, attachment_url: str, path_dest: str):
         response = requests.get(attachment_url, stream=True, timeout=10)
         if response.status_code == 200:
@@ -185,7 +189,7 @@ class Messenger():
             print('Downloaded attachment successfully!')
         else:
             print('Error downloading attachment')
-    
+
     def send_quick_reply(self, sender_id, message: str, quick_replies: list):
         if len(quick_replies) > 13:
             print("Quick replies should be less than 13")
@@ -205,7 +209,7 @@ class Messenger():
 
         r = requests.post(self._url, headers=header, json=payload, timeout=10)
         return r.json()
-    
+
     def send_button_template(self, sender_id: str, message: str, buttons: list):
         header = {"Content-Type": "application/json",
                   "Authorization": f"Bearer {self.access_token}"}
@@ -228,7 +232,7 @@ class Messenger():
 
         r = requests.post(self._url, headers=header, json=payload, timeout=10)
         return r.json()
-    
+
     def send_media_template(self, sender_id: str, media_type: str, attachment_id: str, buttons: list):
         header = {"Content-Type": "application/json",
                   "Authorization": f"Bearer {self.access_token}"}
@@ -256,7 +260,7 @@ class Messenger():
 
         r = requests.post(self._url, headers=header, json=body, timeout=10)
         return r.json()
-    
+
     def send_generic_template(self, sender_id: str, title: str, image_url: Optional[str] = None, default_url: Optional[str] = None, subtitle: Optional[str] = None, buttons: Optional[list] = None):
         if default_url:
             default_action = {
@@ -269,7 +273,7 @@ class Messenger():
             default_action = None
 
         header = {"Content-Type": "application/json",
-                "Authorization": f"Bearer {self.access_token}"}
+                  "Authorization": f"Bearer {self.access_token}"}
         body = {
             "recipient": {
                 "id": sender_id
@@ -292,7 +296,44 @@ class Messenger():
                 }
             }
         }
-        
+
+        try:
+            r = requests.post(self._url, headers=header, json=body, timeout=10)
+            r.raise_for_status()
+            return r.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e} \n{r.json()}")
+            return None
+
+    def send_receipt_template(self, sender_id: str, order_number: str, payment_method: str, summary: dict, currency: str = 'USD',
+                              order_url: Optional[str] = None, timestamp: Optional[str] = None, address: Optional[dict] = None,
+                              adjustments: Optional[list] = None, elements: Optional[list] = None):
+        header = {"Content-Type": "application/json",
+                  "Authorization": f"Bearer {self.access_token}"}
+        body = {
+            "recipient": {
+                "id": sender_id
+            },
+            "message": {
+                "attachment": {
+                    "type": "template",
+                    "payload": {
+                        "template_type": "receipt",
+                        "recipient_name": "Stephane Crozatier",
+                        "order_number": order_number,
+                        "currency": currency,
+                        "payment_method": payment_method,
+                        "order_url": order_url,
+                        "timestamp": timestamp,
+                        "address": address,
+                        "summary": summary,
+                        "adjustments": adjustments,
+                        "elements": elements
+                    }
+                }
+            }
+        }
+
         try:
             r = requests.post(self._url, headers=header, json=body, timeout=10)
             r.raise_for_status()
