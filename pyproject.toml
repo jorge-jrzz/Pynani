@@ -1,23 +1,43 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
+requires = ["setuptools >= 61.0", "wheel"]
 
 [project]
-name = "pynani"
-version = "1.1.0"
-description = "A package to wrap the Messenger API"
-readme = "README.md"
 authors = [
-    { name = "Jorge Juarez", email = "jorgeang33@gmail.com" },
+  {name = "Jorge Juarez", email = "jorgeang33@gmail.com"},
 ]
-license = { text = "MIT" }
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Customer Service",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: Communications :: Chat",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Software Development :: Version Control :: Git",
+  "Topic :: Utilities",
+  "License :: OSI Approved :: MIT License", # "Topic :: Documentation :: Sphinx"
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    "requests>=2.32.3",
+  "requests>=2.32.3",
 ]
+description = "A package to wrap the Messenger API"
+keywords = ["Messenger", "wrapper", "Meta", "API", "Facebook", "Instagram"]
+license = {file = "LICENSE"}
+name = "pynani"
+readme = "README.md"
+requires-python = ">=3.8"
+version = "1.2.0"
+
 [project.urls]
-"Homepage" = "https://github.com/jorge-jrzz/Pynani/tree/main"
+"Bug Tracker" = "https://github.com/jorge-jrzz/Pynani/issues"
+Repository = "https://github.com/jorge-jrzz/Pynani"
