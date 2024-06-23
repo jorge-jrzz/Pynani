@@ -1,34 +1,116 @@
-from typing import Union, Optional
-from pathlib import Path
+# ██████╗░██╗░░░██╗███╗░░██╗░█████╗░███╗░░██╗██╗
+# ██╔══██╗╚██╗░██╔╝████╗░██║██╔══██╗████╗░██║██║
+# ██████╔╝░╚████╔╝░██╔██╗██║███████║██╔██╗██║██║
+# ██╔═══╝░░░╚██╔╝░░██║╚████║██╔══██║██║╚████║██║
+# ██║░░░░░░░░██║░░░██║░╚███║██║░░██║██║░╚███║██║
+# ╚═╝░░░░░░░░╚═╝░░░╚═╝░░╚══╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝
+
+
 import mimetypes
+import json
+import logging
+from pathlib import Path
+from typing import Union, Optional, Tuple, Dict
 import requests
+from requests.exceptions import RequestException
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s from Pynani - %(message)s'
+)
+
+
+def jsonify(data: Union[Dict, str], status_code: int) -> Tuple[Dict, int, Dict]:
+    """
+    Converts the given data to a JSON response with the specified status code.
+
+    Args:
+        data (Union[Dict, str]): The data to be converted to JSON. It can be a dictionary or a string.
+        status_code (int): The HTTP status code to be returned with the response.
+
+    Returns:
+        Tuple[Dict, int, Dict]: A tuple containing the JSON response, the status code, and the headers.
+    """
+
+    if isinstance(data, dict):
+        return json.dumps(data), status_code, {'Content-Type': 'application/json'}
+    elif isinstance(data, str):
+        return data.encode('utf-8'), status_code, {'Content-Type': 'text/html'}
 
 
 class Messenger():
-    def __init__(self, access_token: str, page_id: str = 'me'):
+    """
+    Initializes the Messenger class with the provided access token and page ID.
+
+    Args:
+        access_token (str): The access token for authenticating API requests.
+        page_id (str, optional): The page ID for the Facebook page. Defaults to 'me'.
+    """
+
+    def __init__(self, access_token: str, page_id: str = 'me') -> None:
         self.access_token = access_token
         self.page_id = page_id
-        self._url = f"https://graph.facebook.com/v20.0/{page_id}/messages"
+        self.__url = f"https://graph.facebook.com/v20.0/{page_id}/messages"
 
-    def verify_token(self, params, token):
+
+    def verify_token(self, params: Dict, token: str) -> Tuple[Dict, int, Dict]:
+        """
+        Verifies the provided token against the expected token.
+
+        Args:
+            params (Dict): The parameters received in the verification request.
+            token (str): The expected verification token.
+
+        Returns:
+            Tuple[Dict, int, Dict]: A tuple containing the JSON response, the status code, and the headers.
+        """
+
         mode = params.get("hub.mode")
         hub_token = params.get("hub.verify_token")
         challenge = params.get("hub.challenge")
 
         if mode == "subscribe" and challenge:
             if hub_token != token:
-                return "Verification token mismatch", 403
-            return challenge, 200
-        return "Hello world", 200
+                logging.info('Response: %d - %s', 403,
+                             'Verification token mismatch')
+                return jsonify("Verification token mismatch", 403)
+            logging.info('Response: %d - %s', 200, "Verification successful")
+            return jsonify(challenge, 200)
+        logging.info('Response: %d - %s', 200,
+                     "This endpoint is to verify token")
+        return jsonify(Path("pynani/verify_token.html").read_text(encoding='utf-8'), 200)
 
-    def get_sender_id(self, data: dict):
+
+    def get_sender_id(self, data: dict) -> Optional[str]:
+        """
+        Extracts the sender ID from the provided data.
+
+        Args:
+            data (dict): The data received from the webhook event.
+
+        Returns:
+            Optional[str]: The sender ID if found, otherwise None.
+        """
+
         try:
             return data['entry'][0]['messaging'][0]['sender']['id']
         except (IndexError, KeyError) as e:
-            print(f"Error accessing sender ID: {e}")
+            logging.info("Error accessing sender ID: %s", e)
             return None
 
-    def get_message_type(self, data: dict):
+
+    def get_message_type(self, data: Dict) -> Optional[str]:
+        """
+        Determines the type of message received from the webhook event.
+
+        Args:
+            data (Dict): The data received from the webhook event.
+
+        Returns:
+            Optional[str]: The type of message if found, otherwise None.
+        """
+
         messaging = data['entry'][0]['messaging'][0]
         try:
             if 'postback' in messaging:
@@ -48,25 +130,49 @@ class Messenger():
                 else:
                     return attachment_type
         except (IndexError, KeyError) as e:
-            print(f"Error accessing message type: {e}")
+            logging.info("Error accessing message type: %s", e)
+            # print(f"Error accessing message type: {e}")
             return None
 
-    def get_message_text(self, data: dict):
+
+    def get_message_text(self, data: Dict) -> Optional[str]:
+        """
+        Extracts the text message from the provided data.
+
+        Args:
+            data (Dict): The data received from the webhook event.
+
+        Returns:
+            Optional[str]: The text message if found, otherwise None.
+        """
+
         try:
             message = data['entry'][0]['messaging'][0]
             if 'message' in message:
-                # print("Hola?")
                 return message['message']['text']
             elif 'postback' in message:
                 return message['postback']['title']
         except (IndexError, KeyError) as e:
-            print(f"Error accessing message text: {e}")
+            logging.info("Error accessing message text: %s", e)
+            # print(f"Error accessing message text: {e}")
             return None
 
-    def send_text_message(self, sender_id, message: Union[str, int]):
+
+    def send_text_message(self, sender_id: str, message: Union[str, int]) -> Optional[Dict]:
+        """
+        Sends a text message to the specified sender.
+
+        Args:
+            sender_id (str): The ID of the recipient.
+            message (Union[str, int]): The message to be sent.
+
+        Returns:
+            Optional[Dict]: The response from the server if the request was successful, otherwise None.
+        """
+
         header = {"Content-Type": "application/json",
                   "Authorization": f"Bearer {self.access_token}"}
-        payload = {
+        body = {
             "recipient": {
                 "id": sender_id
             },
@@ -77,17 +183,29 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self._url, headers=header,
-                              json=payload, timeout=10)
+            r = requests.post(self.__url, headers=header, json=body, timeout=10)
             r.raise_for_status()
-            return r.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Request failed: {e} \n{r.json()}")
+            logging.info("Response: %d - %s", 200, "Message sent successfully")
+            return jsonify(r.json(), 200)
+        except RequestException as e:
+            logging.info("Response: %d - %s", 403, e)
+            # print(f"Request failed: {e} \n{r.json()}")
             return None
 
+
     def upload_attachment(self, attachment_type: str, attachment_path: str) -> str:
-        attachments_url = f"https://graph.facebook.com/v20.0/{
-            self.page_id}/message_attachments"
+        """
+        Uploads an attachment to the server and returns the attachment ID.
+
+        Args:
+            attachment_type (str): The type of the attachment (e.g., 'image', 'video', 'audio', 'file').
+            attachment_path (str): The local file path to the attachment.
+
+        Returns:
+            str: The ID of the uploaded attachment if successful, otherwise None.
+        """
+
+        attachments_url = f"https://graph.facebook.com/v20.0/{self.page_id}/message_attachments"
         attachment = Path(attachment_path)
         mimetype, _ = mimetypes.guess_type(attachment)
 
@@ -107,34 +225,74 @@ class Messenger():
         }
         body = {"message": str(message)}
 
-        r = requests.post(attachments_url, headers=header,
-                          files=file, data=body, timeout=20)
-
         try:
+            r = requests.post(attachments_url, headers=header,
+                              files=file, data=body, timeout=20)
+            r.raise_for_status()
+            logging.info("Response: %d - %s", 200,
+                         "Attachment uploaded successfully")
             attachment_id = r.json()["attachment_id"]
             return attachment_id
-        except KeyError as e:
-            print(f"Error uploading attachment: {e}")
+        except (RequestException, IndexError, KeyError) as e:
+            logging.info("Response: %d - %s", 403, e)
+            # print(f"Request failed: {e} \n{r.json()}")
             return None
 
-    def get_url_attachment(self, data: dict):
+
+    def get_url_attachment(self, data: Dict) -> Optional[str]:
+        """
+        Extracts the URL of an attachment from the provided data.
+
+        Args:
+            data (Dict): The data containing the attachment information.
+
+        Returns:
+            Optional[str]: The URL of the attachment if found, otherwise None.
+        """
+
         try:
             return data['entry'][0]['messaging'][0]['message']['attachments'][0]["payload"]["url"]
         except (IndexError, KeyError) as e:
-            print(f"Error accessing attachment url: {e}")
+            logging.info("Error accessing attachment url: %s", e)
+            # print(f"Error accessing attachment url: {e}")
             return None
 
-    def get_attachment_type(self, data: dict):
+
+    def get_attachment_type(self, data: Dict) -> Optional[str]:
+        """
+        Extracts the type of an attachment from the provided data.
+
+        Args:
+            data (Dict): The data containing the attachment information.
+
+        Returns:
+            Optional[str]: The type of the attachment if found, otherwise None.
+        """
+
         try:
             return data['entry'][0]['messaging'][0]['message']['attachments'][0]["type"]
         except (IndexError, KeyError) as e:
-            print(f"Error accessing attachment type: {e}")
+            logging.info("Error accessing attachment type: %s", e)
+            # print(f"Error accessing attachment type: {e}")
             return None
 
-    def send_attachment(self, sender_id: str, attachment_type: str, attachment_url: str):
+
+    def send_attachment(self, sender_id: str, attachment_type: str, attachment_url: str) -> Optional[Dict]:
+        """
+        Sends an attachment to a user.
+
+        Args:
+            sender_id (str): The ID of the recipient.
+            attachment_type (str): The type of the attachment (e.g., 'image', 'video', 'audio', 'file').
+            attachment_url (str): The URL of the attachment to be sent.
+
+        Returns:
+            Optional[Dict]: The response from the server if the request is successful, otherwise None.
+        """
+
         header = {"Content-Type": "application/json",
                   "Authorization": f"Bearer {self.access_token}"}
-        payload = {
+        body = {
             "recipient": {
                 "id": sender_id
             },
@@ -150,12 +308,33 @@ class Messenger():
             }
         }
 
-        r = requests.post(self._url, headers=header, json=payload, timeout=10)
-        return r.json()
+        try:
+            r = requests.post(self.__url, headers=header, json=body, timeout=15)
+            r.raise_for_status()
+            logging.info("Response: %d - %s", 200, "Attachment sent successfully")
+            return jsonify(r.json(), 200)
+        except RequestException as e:
+            logging.info("Response: %d - %s", 403, e)
+            # print(f"Request failed: {e} \n{r.json()}")
+            return None
 
-    def send_local_attachment(self, sender_id: str, attachment_type: str, attachment_path: str):
+
+    def send_local_attachment(self, sender_id: str, attachment_type: str, attachment_path: str) -> Optional[Dict]:
+        """
+        Sends a local attachment to a user.
+
+        Args:
+            sender_id (str): The ID of the recipient.
+            attachment_type (str): The type of the attachment (e.g., 'image', 'video', 'audio', 'file').
+            attachment_path (str): The local path to the attachment to be sent.
+
+        Returns:
+            Optional[Dict]: The response from the server if the request is successful, otherwise None.
+        """
+
         attachment = Path(attachment_path)
         mimetype, _ = mimetypes.guess_type(attachment)
+
         recipient = {"id": sender_id}
         message = {
             "attachment": {
@@ -175,28 +354,62 @@ class Messenger():
             "filedata": (attachment.name, attachment.open('rb'), mimetype)
         }
 
-        r = requests.post(self._url, headers=header,
-                          data=body, files=file, timeout=10)
-        return r.json()
+        try:
+            r = requests.post(self.__url, headers=header, data=body, files=file, timeout=15)
+            r.raise_for_status()
+            logging.info("Response: %d - %s", 200, "Attachment sent successfully")
+            return jsonify(r.json(), 200)
+        except RequestException as e:
+            logging.info("Response: %d - %s", 403, e)
+            # print(f"Request failed: {e} \n{r.json()}")
+            return None
+        
 
-    def download_attachment(self, attachment_url: str, path_dest: str):
-        response = requests.get(attachment_url, stream=True, timeout=10)
-        if response.status_code == 200:
+    def download_attachment(self, attachment_url: str, path_dest: str) -> None:
+        """
+        Downloads an attachment from the given URL and saves it to the specified destination path.
+
+        Args:
+            attachment_url (str): The URL of the attachment to be downloaded.
+            path_dest (str): The local file path where the attachment will be saved.
+
+        Returns:
+            None
+        """
+
+        try:
+            r = requests.get(attachment_url, stream=True, timeout=10)
+            r.raise_for_status()
             with open(path_dest, 'wb') as file:
-                for chunk in response.iter_content(1024):
+                for chunk in r.iter_content(1024):
                     file.write(chunk)
+            logging.info("Response: %d - Downloaded attachment successfully to %s", 200, path_dest)
+        except RequestException as e:
+            logging.info("Response: %d - %s", 403, e)
+            return None
 
-            print('Downloaded attachment successfully!')
-        else:
-            print('Error downloading attachment')
 
-    def send_quick_reply(self, sender_id, message: str, quick_replies: list):
+    def send_quick_reply(self, sender_id: str, message: Union[str, int], quick_replies: list) -> Optional[Dict]:
+        """
+        Sends a quick reply message to the specified sender.
+
+        Args:
+            sender_id (str): The ID of the recipient.
+            message (Union[str, int]): The message to be sent.
+            quick_replies (list): A list of quick reply options. The list should contain less than 13 items.
+
+        Returns:
+            Optional[Dict]: The response from the server if the request was successful, otherwise None.
+        """
+
         if len(quick_replies) > 13:
-            print("Quick replies should be less than 13")
+            logging.info("Quick replies should be less than 13")
+            # print("Quick replies should be less than 13")
             quick_replies = quick_replies[:13]
+
         header = {"Content-Type": "application/json",
                   "Authorization": f"Bearer {self.access_token}"}
-        payload = {
+        body = {
             "recipient": {
                 "id": sender_id
             },
@@ -207,8 +420,14 @@ class Messenger():
             }
         }
 
-        r = requests.post(self._url, headers=header, json=payload, timeout=10)
-        return r.json()
+        try:
+            r = requests.post(self.__url, headers=header, json=body, timeout=10)
+            r.raise_for_status()
+            logging.info("Response: %d - %s", 200, "Quick reply sent successfully")
+            return jsonify(r.json(), 200)
+        except RequestException as e:
+            logging.info("Response: %d - %s", 403, e)
+            return None
 
     def send_button_template(self, sender_id: str, message: str, buttons: list):
         header = {"Content-Type": "application/json",
@@ -230,7 +449,7 @@ class Messenger():
             }
         }
 
-        r = requests.post(self._url, headers=header, json=payload, timeout=10)
+        r = requests.post(self.__url, headers=header, json=payload, timeout=10)
         return r.json()
 
     def send_media_template(self, sender_id: str, media_type: str, attachment_id: str, buttons: list):
@@ -258,7 +477,7 @@ class Messenger():
             }
         }
 
-        r = requests.post(self._url, headers=header, json=body, timeout=10)
+        r = requests.post(self.__url, headers=header, json=body, timeout=10)
         return r.json()
 
     def send_generic_template(self, sender_id: str, title: str, image_url: Optional[str] = None, default_url: Optional[str] = None, subtitle: Optional[str] = None, buttons: Optional[list] = None):
@@ -298,7 +517,8 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self._url, headers=header, json=body, timeout=10)
+            r = requests.post(self.__url, headers=header,
+                              json=body, timeout=10)
             r.raise_for_status()
             return r.json()
         except requests.exceptions.RequestException as e:
@@ -335,7 +555,8 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self._url, headers=header, json=body, timeout=10)
+            r = requests.post(self.__url, headers=header,
+                              json=body, timeout=10)
             r.raise_for_status()
             return r.json()
         except requests.exceptions.RequestException as e:
