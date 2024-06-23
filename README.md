@@ -83,9 +83,9 @@ def meta_webhook():
     data = request.get_json()
     sender_id = mess.get_sender_id(data)
     message = mess.get_message_text(data)
-    if mensaje == "hello":
+    if message == "Hello":
         mess.send_text_message(sender_id, "Hello, World!")
-    if mensaje == "bye":
+    if message == "Bye":
         mess.send_text_message(sender_id, "Nice to meet you! 👍🏽")
 
     return jsonify({"status": "success"}), 200
@@ -119,9 +119,9 @@ def meta_webhook():
     data = request.get_json()
     sender_id = mess.get_sender_id(data)
     message = mess.get_message_text(data)
-    if mensaje == "hello":
+    if message == "Hello":
         mess.send_text_message(sender_id, "Hello, World!")
-    if mensaje == "bye":
+    if message == "Bye":
         mess.send_text_message(sender_id, "Nice to meet you! 👍🏽")
 
     return jsonify({"status": "success"}), 200
