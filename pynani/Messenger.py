@@ -10,7 +10,7 @@ import mimetypes
 import json
 import logging
 from pathlib import Path
-from typing import Union, Optional, Tuple, Dict
+from typing import Union, Optional, Tuple, Dict, List
 import requests
 from requests.exceptions import RequestException
 
@@ -389,7 +389,7 @@ class Messenger():
             return None
 
 
-    def send_quick_reply(self, sender_id: str, message: Union[str, int], quick_replies: list) -> Optional[Dict]:
+    def send_quick_reply(self, sender_id: str, message: Union[str, int], quick_replies: List[Dict]) -> Optional[Dict]:
         """
         Sends a quick reply message to the specified sender.
 
@@ -429,10 +429,26 @@ class Messenger():
             logging.info("Response: %d - %s", 403, e)
             return None
 
-    def send_button_template(self, sender_id: str, message: str, buttons: list):
+    def send_button_template(self, sender_id: str, message: str, buttons: List[Dict]) -> Optional[Dict]:
+        """
+        Sends a button template message to the specified sender.
+
+        Args:
+            sender_id (str): The ID of the recipient.
+            message (str): The message to be sent.
+            buttons (list): A list of button options. The list should contain less than 3 items.
+
+        Returns:
+            Optional[Dict]: The response from the server if the request was successful, otherwise None.
+        """
+
+        if len(buttons) > 3:
+            logging.info("Buttons template should be less than 3")
+            buttons = buttons[:3]
+
         header = {"Content-Type": "application/json",
                   "Authorization": f"Bearer {self.access_token}"}
-        payload = {
+        body = {
             "recipient": {
                 "id": sender_id
             },
@@ -449,8 +465,15 @@ class Messenger():
             }
         }
 
-        r = requests.post(self.__url, headers=header, json=payload, timeout=10)
-        return r.json()
+        try:
+            r = requests.post(self.__url, headers=header, json=body, timeout=10)
+            r.raise_for_status()
+            logging.info("Response: %d - %s", 200, "Button template sent successfully")
+            return jsonify(r.json(), 200)
+        except RequestException as e:
+            logging.info("Response: %d - %s", 403, e)
+            return None
+
 
     def send_media_template(self, sender_id: str, media_type: str, attachment_id: str, buttons: list):
         header = {"Content-Type": "application/json",
