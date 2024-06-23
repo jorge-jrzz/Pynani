@@ -475,7 +475,20 @@ class Messenger():
             return None
 
 
-    def send_media_template(self, sender_id: str, media_type: str, attachment_id: str, buttons: list):
+    def send_media_template(self, sender_id: str, media_type: str, attachment_id: str, buttons: List[Dict]) -> Optional[Dict]:
+        """
+        Sends a media template message to the specified sender.
+
+        Args:
+            sender_id (str): The ID of the recipient.
+            media_type (str): The type of media to be sent (e.g., 'image', 'video', 'audio', 'file').
+            attachment_id (str): The ID of the attachment to be sent.
+            buttons (list): A list of button options. The list should contain less than 3 items.
+
+        Returns:
+            Optional[Dict]: The response from the server if the request was successful, otherwise None.
+        """
+
         header = {"Content-Type": "application/json",
                   "Authorization": f"Bearer {self.access_token}"}
         body = {
@@ -500,10 +513,33 @@ class Messenger():
             }
         }
 
-        r = requests.post(self.__url, headers=header, json=body, timeout=10)
-        return r.json()
+        try:
+            r = requests.post(self.__url, headers=header, json=body, timeout=10)
+            r.raise_for_status()
+            logging.info("Response: %d - %s", 200, "Media template sent successfully")
+            return jsonify(r.json(), 200)
+        except RequestException as e:
+            logging.info("Response: %d - %s", 403, e)
+            return None
+        
 
-    def send_generic_template(self, sender_id: str, title: str, image_url: Optional[str] = None, default_url: Optional[str] = None, subtitle: Optional[str] = None, buttons: Optional[list] = None):
+    def send_generic_template(self, sender_id: str, title: str, image_url: Optional[str] = None, default_url: Optional[str] = None, 
+                              subtitle: Optional[str] = None, buttons: Optional[List] = None) -> Optional[Dict]:
+        """
+        Sends a generic template message to the specified sender.
+
+        Args:
+            sender_id (str): The ID of the recipient.
+            title (str): The title of the template.
+            image_url (Optional[str], optional): The URL of the image to be displayed. Defaults to None.
+            default_url (Optional[str], optional): The URL for the default action. Defaults to None.
+            subtitle (Optional[str], optional): The subtitle of the template. Defaults to None.
+            buttons (Optional[List], optional): A list of button options. Defaults to None.
+
+        Returns:
+            Optional[Dict]: The response from the server if the request was successful, otherwise None.
+        """
+
         if default_url:
             default_action = {
                 "type": "web_url",
@@ -540,17 +576,37 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self.__url, headers=header,
-                              json=body, timeout=10)
+            r = requests.post(self.__url, headers=header, json=body, timeout=10)
             r.raise_for_status()
-            return r.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Request failed: {e} \n{r.json()}")
+            logging.info("Response: %d - %s", 200, "Generic template sent successfully")
+            return jsonify(r.json(), 200)
+        except RequestException as e:
+            logging.info("Response: %d - %s", 403, e)
             return None
 
-    def send_receipt_template(self, sender_id: str, order_number: str, payment_method: str, summary: dict, currency: str = 'USD',
-                              order_url: Optional[str] = None, timestamp: Optional[str] = None, address: Optional[dict] = None,
-                              adjustments: Optional[list] = None, elements: Optional[list] = None):
+
+    def send_receipt_template(self, sender_id: str, order_number: str, payment_method: str, summary: Dict, currency: str = 'USD',
+                              order_url: Optional[str] = None, timestamp: Optional[str] = None, address: Optional[Dict] = None,
+                              adjustments: Optional[List] = None, elements: Optional[List] = None) -> Optional[Dict]:
+        """
+        Sends a receipt template message to the specified sender.
+
+        Args:
+            sender_id (str): The ID of the recipient.
+            order_number (str): The order number of the transaction.
+            payment_method (str): The payment method used.
+            summary (Dict): A dictionary containing the summary of the transaction.
+            currency (str, optional): The currency used in the transaction. Defaults to 'USD'.
+            order_url (Optional[str], optional): The URL of the order. Defaults to None.
+            timestamp (Optional[str], optional): The timestamp of the transaction. Defaults to None.
+            address (Optional[Dict], optional): The address of the recipient. Defaults to None.
+            adjustments (Optional[List], optional): A list of adjustments made to the order. Defaults to None.
+            elements (Optional[List], optional): A list of elements in the order. Defaults to None.
+
+        Returns:
+            Optional[Dict]: The response from the server if the request was successful, otherwise None.
+        """
+
         header = {"Content-Type": "application/json",
                   "Authorization": f"Bearer {self.access_token}"}
         body = {
@@ -578,10 +634,10 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self.__url, headers=header,
-                              json=body, timeout=10)
+            r = requests.post(self.__url, headers=header, json=body, timeout=10)
             r.raise_for_status()
-            return r.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Request failed: {e} \n{r.json()}")
+            logging.info("Response: %d - %s", 200, "Receipt template sent successfully")
+            return jsonify(r.json(), 200)
+        except RequestException as e:
+            logging.info("Response: %d - %s", 403, e)
             return None
