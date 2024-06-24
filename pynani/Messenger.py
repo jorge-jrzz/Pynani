@@ -13,15 +13,29 @@ from pathlib import Path
 from typing import Union, Optional, Tuple, Dict, List
 import requests
 from requests.exceptions import RequestException
+from colorlog import ColoredFormatter
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s from Pynani - %(message)s'
+logger = logging.getLogger('Pynani')
+logger.setLevel(logging.DEBUG)
+formatter = ColoredFormatter(
+    "%(log_color)s%(levelname)s: %(name)s  [%(asctime)s] -- %(message)s",
+    datefmt='%d/%m/%Y %H:%M:%S',
+    log_colors={
+        'DEBUG': 'cyan',
+        'INFO': 'green',
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'bold_red',
+    }
 )
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
-def jsonify(data: Union[Dict, str], status_code: int) -> Tuple[Dict, int, Dict]:
+def jsonify(data: Union[Dict, str], status_code: int) -> Tuple:
     """
     Converts the given data to a JSON response with the specified status code.
 
@@ -30,7 +44,7 @@ def jsonify(data: Union[Dict, str], status_code: int) -> Tuple[Dict, int, Dict]:
         status_code (int): The HTTP status code to be returned with the response.
 
     Returns:
-        Tuple[Dict, int, Dict]: A tuple containing the JSON response, the status code, and the headers.
+        Tuple: A tuple containing the JSON response, the status code, and the headers.
     """
 
     if isinstance(data, dict):
@@ -53,8 +67,7 @@ class Messenger():
         self.page_id = page_id
         self.__url = f"https://graph.facebook.com/v20.0/{page_id}/messages"
 
-
-    def verify_token(self, params: Dict, token: str) -> Tuple[Dict, int, Dict]:
+    def verify_token(self, params: Dict, token: str) -> Tuple:
         """
         Verifies the provided token against the expected token.
 
@@ -63,7 +76,7 @@ class Messenger():
             token (str): The expected verification token.
 
         Returns:
-            Tuple[Dict, int, Dict]: A tuple containing the JSON response, the status code, and the headers.
+            Tuple: A tuple containing the JSON response, the status code, and the headers.
         """
 
         mode = params.get("hub.mode")
@@ -72,15 +85,12 @@ class Messenger():
 
         if mode == "subscribe" and challenge:
             if hub_token != token:
-                logging.info('Response: %d - %s', 403,
-                             'Verification token mismatch')
-                return jsonify("Verification token mismatch", 403)
-            logging.info('Response: %d - %s', 200, "Verification successful")
+                logger.error('Verification token mismatch - %d', 403)
+                return jsonify({"Error": "Verification token mismatch"}, 403)
+            logger.info('Verification successful - %d', 200)
             return jsonify(challenge, 200)
-        logging.info('Response: %d - %s', 200,
-                     "This endpoint is to verify token")
+        logger.warning('This endpoint is to verify token - %d', 200,)
         return jsonify(Path("pynani/verify_token.html").read_text(encoding='utf-8'), 200)
-
 
     def get_sender_id(self, data: dict) -> Optional[str]:
         """
@@ -96,9 +106,8 @@ class Messenger():
         try:
             return data['entry'][0]['messaging'][0]['sender']['id']
         except (IndexError, KeyError) as e:
-            logging.info("Error accessing sender ID: %s", e)
+            logger.error("Error accessing sender ID: %s", e)
             return None
-
 
     def get_message_type(self, data: Dict) -> Optional[str]:
         """
@@ -130,10 +139,8 @@ class Messenger():
                 else:
                     return attachment_type
         except (IndexError, KeyError) as e:
-            logging.info("Error accessing message type: %s", e)
-            # print(f"Error accessing message type: {e}")
+            logger.error("Error accessing message type: %s", e)
             return None
-
 
     def get_message_text(self, data: Dict) -> Optional[str]:
         """
@@ -153,10 +160,8 @@ class Messenger():
             elif 'postback' in message:
                 return message['postback']['title']
         except (IndexError, KeyError) as e:
-            logging.info("Error accessing message text: %s", e)
-            # print(f"Error accessing message text: {e}")
+            logger.error("Error accessing message text: %s", e)
             return None
-
 
     def send_text_message(self, sender_id: str, message: Union[str, int]) -> Optional[Dict]:
         """
@@ -183,15 +188,14 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self.__url, headers=header, json=body, timeout=10)
+            r = requests.post(self.__url, headers=header,
+                              json=body, timeout=10)
             r.raise_for_status()
-            logging.info("Response: %d - %s", 200, "Message sent successfully")
+            logger.info("Message sent successfully - %d", 200)
             return jsonify(r.json(), 200)
         except RequestException as e:
-            logging.info("Response: %d - %s", 403, e)
-            # print(f"Request failed: {e} \n{r.json()}")
+            logger.error("%s - %d", e, 403)
             return None
-
 
     def upload_attachment(self, attachment_type: str, attachment_path: str) -> str:
         """
@@ -205,7 +209,8 @@ class Messenger():
             str: The ID of the uploaded attachment if successful, otherwise None.
         """
 
-        attachments_url = f"https://graph.facebook.com/v20.0/{self.page_id}/message_attachments"
+        attachments_url = f"https://graph.facebook.com/v20.0/{
+            self.page_id}/message_attachments"
         attachment = Path(attachment_path)
         mimetype, _ = mimetypes.guess_type(attachment)
 
@@ -229,15 +234,12 @@ class Messenger():
             r = requests.post(attachments_url, headers=header,
                               files=file, data=body, timeout=20)
             r.raise_for_status()
-            logging.info("Response: %d - %s", 200,
-                         "Attachment uploaded successfully")
+            logger.info("Attachment uploaded successfully - %d", 200)
             attachment_id = r.json()["attachment_id"]
             return attachment_id
         except (RequestException, IndexError, KeyError) as e:
-            logging.info("Response: %d - %s", 403, e)
-            # print(f"Request failed: {e} \n{r.json()}")
+            logger.error("%s - %d", e, 403)
             return None
-
 
     def get_url_attachment(self, data: Dict) -> Optional[str]:
         """
@@ -253,10 +255,8 @@ class Messenger():
         try:
             return data['entry'][0]['messaging'][0]['message']['attachments'][0]["payload"]["url"]
         except (IndexError, KeyError) as e:
-            logging.info("Error accessing attachment url: %s", e)
-            # print(f"Error accessing attachment url: {e}")
+            logger.error("Error accessing attachment url: %s", e)
             return None
-
 
     def get_attachment_type(self, data: Dict) -> Optional[str]:
         """
@@ -272,10 +272,8 @@ class Messenger():
         try:
             return data['entry'][0]['messaging'][0]['message']['attachments'][0]["type"]
         except (IndexError, KeyError) as e:
-            logging.info("Error accessing attachment type: %s", e)
-            # print(f"Error accessing attachment type: {e}")
+            logger.error("Error accessing attachment type: %s", e)
             return None
-
 
     def send_attachment(self, sender_id: str, attachment_type: str, attachment_url: str) -> Optional[Dict]:
         """
@@ -309,15 +307,14 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self.__url, headers=header, json=body, timeout=15)
+            r = requests.post(self.__url, headers=header,
+                              json=body, timeout=15)
             r.raise_for_status()
-            logging.info("Response: %d - %s", 200, "Attachment sent successfully")
+            logger.info("Attachment sent successfully - %d", 200)
             return jsonify(r.json(), 200)
         except RequestException as e:
-            logging.info("Response: %d - %s", 403, e)
-            # print(f"Request failed: {e} \n{r.json()}")
+            logger.error("%s - %d", e, 403)
             return None
-
 
     def send_local_attachment(self, sender_id: str, attachment_type: str, attachment_path: str) -> Optional[Dict]:
         """
@@ -355,15 +352,14 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self.__url, headers=header, data=body, files=file, timeout=15)
+            r = requests.post(self.__url, headers=header,
+                              data=body, files=file, timeout=15)
             r.raise_for_status()
-            logging.info("Response: %d - %s", 200, "Attachment sent successfully")
+            logger.info("Attachment sent successfully - %d", 200)
             return jsonify(r.json(), 200)
         except RequestException as e:
-            logging.info("Response: %d - %s", 403, e)
-            # print(f"Request failed: {e} \n{r.json()}")
+            logger.error("%s - %d", e, 403)
             return None
-        
 
     def download_attachment(self, attachment_url: str, path_dest: str) -> None:
         """
@@ -383,11 +379,11 @@ class Messenger():
             with open(path_dest, 'wb') as file:
                 for chunk in r.iter_content(1024):
                     file.write(chunk)
-            logging.info("Response: %d - Downloaded attachment successfully to %s", 200, path_dest)
+            logger.info(
+                "Downloaded attachment successfully to \"%s\" - %d", path_dest, 200)
         except RequestException as e:
-            logging.info("Response: %d - %s", 403, e)
+            logger.error("%s - %d", e, 403)
             return None
-
 
     def send_quick_reply(self, sender_id: str, message: Union[str, int], quick_replies: List[Dict]) -> Optional[Dict]:
         """
@@ -403,8 +399,7 @@ class Messenger():
         """
 
         if len(quick_replies) > 13:
-            logging.info("Quick replies should be less than 13")
-            # print("Quick replies should be less than 13")
+            logger.warning("Quick replies should be less than 13")
             quick_replies = quick_replies[:13]
 
         header = {"Content-Type": "application/json",
@@ -421,12 +416,13 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self.__url, headers=header, json=body, timeout=10)
+            r = requests.post(self.__url, headers=header,
+                              json=body, timeout=10)
             r.raise_for_status()
-            logging.info("Response: %d - %s", 200, "Quick reply sent successfully")
+            logger.info("Quick reply sent successfully - %d", 200)
             return jsonify(r.json(), 200)
         except RequestException as e:
-            logging.info("Response: %d - %s", 403, e)
+            logger.error("%s - %d", e, 403)
             return None
 
     def send_button_template(self, sender_id: str, message: str, buttons: List[Dict]) -> Optional[Dict]:
@@ -443,7 +439,7 @@ class Messenger():
         """
 
         if len(buttons) > 3:
-            logging.info("Buttons template should be less than 3")
+            logger.warning("Buttons template should be less than 3")
             buttons = buttons[:3]
 
         header = {"Content-Type": "application/json",
@@ -466,14 +462,14 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self.__url, headers=header, json=body, timeout=10)
+            r = requests.post(self.__url, headers=header,
+                              json=body, timeout=10)
             r.raise_for_status()
-            logging.info("Response: %d - %s", 200, "Button template sent successfully")
+            logger.info("Button template sent successfully - %d", 200)
             return jsonify(r.json(), 200)
         except RequestException as e:
-            logging.info("Response: %d - %s", 403, e)
+            logger.error("%s - %d", e, 403)
             return None
-
 
     def send_media_template(self, sender_id: str, media_type: str, attachment_id: str, buttons: List[Dict]) -> Optional[Dict]:
         """
@@ -514,16 +510,16 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self.__url, headers=header, json=body, timeout=10)
+            r = requests.post(self.__url, headers=header,
+                              json=body, timeout=10)
             r.raise_for_status()
-            logging.info("Response: %d - %s", 200, "Media template sent successfully")
+            logger.info("Media template sent successfully - %d", 200)
             return jsonify(r.json(), 200)
         except RequestException as e:
-            logging.info("Response: %d - %s", 403, e)
+            logger.error("%s - %d", e, 403)
             return None
-        
 
-    def send_generic_template(self, sender_id: str, title: str, image_url: Optional[str] = None, default_url: Optional[str] = None, 
+    def send_generic_template(self, sender_id: str, title: str, image_url: Optional[str] = None, default_url: Optional[str] = None,
                               subtitle: Optional[str] = None, buttons: Optional[List] = None) -> Optional[Dict]:
         """
         Sends a generic template message to the specified sender.
@@ -576,14 +572,14 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self.__url, headers=header, json=body, timeout=10)
+            r = requests.post(self.__url, headers=header,
+                              json=body, timeout=10)
             r.raise_for_status()
-            logging.info("Response: %d - %s", 200, "Generic template sent successfully")
+            logger.info("Generic template sent successfully - %d", 200)
             return jsonify(r.json(), 200)
         except RequestException as e:
-            logging.info("Response: %d - %s", 403, e)
+            logger.error("%s - %d", e, 403)
             return None
-
 
     def send_receipt_template(self, sender_id: str, order_number: str, payment_method: str, summary: Dict, currency: str = 'USD',
                               order_url: Optional[str] = None, timestamp: Optional[str] = None, address: Optional[Dict] = None,
@@ -634,10 +630,11 @@ class Messenger():
         }
 
         try:
-            r = requests.post(self.__url, headers=header, json=body, timeout=10)
+            r = requests.post(self.__url, headers=header,
+                              json=body, timeout=10)
             r.raise_for_status()
-            logging.info("Response: %d - %s", 200, "Receipt template sent successfully")
+            logger.info("Receipt template sent successfully - %d", 200)
             return jsonify(r.json(), 200)
         except RequestException as e:
-            logging.info("Response: %d - %s", 403, e)
+            logger.error("%s - %d", e, 403)
             return None
