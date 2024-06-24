@@ -8,6 +8,7 @@ requests = "*"
 flask = "*"
 build = "*"
 twine = "*"
+colorlog = "*"
 
 [dev-packages]
 
