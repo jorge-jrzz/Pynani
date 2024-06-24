@@ -39,12 +39,12 @@ def quick_buttons(buttons: List[Union[str, int]]) -> List[Dict]:
 
     Example:
         >>> quick_buttons(["Hello", "World"])
-        [{'content_type': 'text', 'title': 'Hello', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': ''}, 
-        {'content_type': 'text', 'title': 'World', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': ''}]
+        [{'content_type': 'text', 'title': 'Hello', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': None}, 
+        {'content_type': 'text', 'title': 'World', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': None}]
         >>> quick_buttons([1, 2, 3])
-        [{'content_type': 'text', 'title': '1', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': ''}, 
-        {'content_type': 'text', 'title': '2', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': ''}, 
-        {'content_type': 'text', 'title': '3', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': ''}]
+        [{'content_type': 'text', 'title': '1', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': None}, 
+        {'content_type': 'text', 'title': '2', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': None}, 
+        {'content_type': 'text', 'title': '3', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': None}]
     """
 
     r_buttons = []
@@ -57,34 +57,31 @@ def quick_buttons(buttons: List[Union[str, int]]) -> List[Dict]:
 
     return r_buttons
 
-def quick_buttons_image(buttons: List) -> List[Dict]:
+def quick_image_buttons(buttons: List[Union[str, int]], images: List[str]) -> List[Dict]:
     """
-    Prepares a list of quick reply buttons with images from a list of dictionaries.
+    Prepares a list of quick reply buttons from a list of strings.
 
     Args:
-        buttons (List): A list of dictionaries representing the quick reply buttons with their properties.
+        buttons (List[str]): A list of strings or integers representing the text for each quick reply button.
+        images (List[str]): A list of strings representing the image URL for each quick reply button.
 
     Returns:
-        List: A list of dictionaries representing the quick reply buttons with their properties, including images.
-
-    Raises:
-        ValueError: If each button is not a dictionary.
+        List: A list of dictionaries representing the quick reply buttons with their properties.
 
     Example:
-        >>> quick_buttons_image([{"text": "Hello", "image_url": "https://photos.com/hello.jpg"}, {"text": "World", "image_url": "https://photos.com/world.jpg"}])
+        >>> quick_image_buttons(["Hello", "World"], ["https://photos.com/hello.jpg", "https://photos.com/world.jpg"])
         [{'content_type': 'text', 'title': 'Hello', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': 'https://photos.com/hello.jpg'}, 
         {'content_type': 'text', 'title': 'World', 'payload': '<POSTBACK_PAYLOAD>', 'image_url': 'https://photos.com/world.jpg'}]
+    If a button does not have an image, the image URL should be None or an empty string.
+        >>> quick_image_buttons(["Hello", "World", "Yes"], ["https://photos.com/hello.jpg", "https://photos.com/world.jpg", None])
     """
 
     r_buttons = []
     if len(buttons) > 13:
         logger.warning("Quick replies should be less than 13")
         buttons = buttons[:13]
-    for b in buttons:
-        if not isinstance(b, dict):
-            logger.error("Each button should be a dictionary")
-            raise ValueError("Each button should be a dictionary")
-        else:
-            r_buttons.append(__make_quick_button(**b))
+
+    for b, i in zip(buttons, images):
+        r_buttons.append(__make_quick_button(b, i))
 
     return r_buttons
