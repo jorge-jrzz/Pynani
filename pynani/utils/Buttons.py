@@ -77,7 +77,7 @@ def basic_buttons( buttons: Union[str, List[Union[str, int]]]) -> List:
             buttons = buttons[:3]
         return [__make_button(button) for button in buttons]
 
-def leave_buttons( buttons: Union[Dict, List[Dict]]) -> List:
+def exit_buttons( buttons: Union[Dict, List[Dict]]) -> List:
     """
     Creates a list of leave buttons.
 
