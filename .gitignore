@@ -163,7 +163,3 @@ cython_debug/
 
 # MacOS stuff 
 .DS_Store
-
-# Project 
-jsons/
-pruebas.py
