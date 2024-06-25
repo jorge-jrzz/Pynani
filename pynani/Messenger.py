@@ -256,8 +256,7 @@ class Messenger():
             "1234567897654321"
         """
 
-        attachments_url = f"https://graph.facebook.com/v20.0/{
-            self.page_id}/message_attachments"
+        attachments_url = f"https://graph.facebook.com/v20.0/{self.page_id}/message_attachments"
         attachment = Path(attachment_path)
         mimetype, _ = mimetypes.guess_type(attachment)
 
