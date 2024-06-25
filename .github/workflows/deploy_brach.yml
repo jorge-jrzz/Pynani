@@ -39,7 +39,9 @@ jobs:
 
       - name: Copy to Deploy Branch
         run: |
-          rm -rf *
+          shopt -s extglob
+          rm -rf !(deployment_directory)
+          shopt -u extglob
           cp -r deployment_directory/* .
           rm -rf deployment_directory
           git add .
