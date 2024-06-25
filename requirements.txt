@@ -1,6 +1,6 @@
-requests = "*"
-colorlog = "*"
-sphinx = "*"
-sphinx-book-theme = "*"
-sphinx-copybutton = "*"
-pynani = "*"
+requests==2.32.3
+colorlog==6.8.2
+sphinx==7.3.7
+sphinx-book-theme==1.1.3
+sphinx-copybutton==0.5.2
+pynani
