@@ -4,11 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "*"
 flask = "*"
+requests = "*"
+colorlog = "*"
 build = "*"
 twine = "*"
-colorlog = "*"
+sphinx = "*"
+sphinx-book-theme = "*"
+sphinx-copybutton = "*"
+pynani = {file = "."}
 
 [dev-packages]
 

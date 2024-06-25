@@ -1,0 +1,6 @@
+requests = "*"
+colorlog = "*"
+sphinx = "*"
+sphinx-book-theme = "*"
+sphinx-copybutton = "*"
+pynani = "*"
