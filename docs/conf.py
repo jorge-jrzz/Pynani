@@ -35,12 +35,12 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'sphinx_book_theme'
-html_logo = "_static/dark_logo_pynani.png"
+html_logo = "_static/logo_for_wite.png"
 
 html_static_path = ['_static']
 html_theme_options = {
     "logo": {
-        "image_dark": "_static/wite_logo_pynani.png",
+        "image_dark": "_static/logo_for_dark.png",
     },
     "icon_links": [
         {
@@ -56,5 +56,3 @@ html_theme_options = {
         },
     ],
 }
-
-locale_dirs = ["locales/"]
