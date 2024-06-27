@@ -1,4 +1,4 @@
-<img align="center" src="https://raw.githubusercontent.com/jorge-jrzz/Pynani/main/banner-pynani-github.png" alt="banner Pynani">
+<img align="center" src="https://raw.githubusercontent.com/jorge-jrzz/Pynani/main/docs/_static/banner-pynani-github.png" alt="banner Pynani">
 
 ---
 
