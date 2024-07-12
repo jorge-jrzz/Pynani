@@ -1,6 +1,8 @@
 from typing import Optional, Union, List, Dict
-from .logs import logger
+from .logs import get_logger
 
+
+logger = get_logger(__name__)
 
 def __make_button( title: str, url: Optional[str] = None, call_number: Optional[str] = None) -> Dict:
     """
