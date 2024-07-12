@@ -12,26 +12,10 @@ from pathlib import Path
 from typing import Union, Optional, Tuple, Dict, List
 import requests
 from requests.exceptions import RequestException
-from .utils import logger
+from .utils import get_logger
 
 
-def jsonify(data: Union[Dict, str], status_code: int) -> Tuple:
-    """
-    Converts the given data to a JSON response with the specified status code.
-
-    Args:
-        data (Union[Dict, str]): The data to be converted to JSON. It can be a dictionary or a string.
-        status_code (int): The HTTP status code to be returned with the response.
-
-    Returns:
-        Tuple: A tuple containing the JSON response, the status code, and the headers.
-    """
-
-    if isinstance(data, dict):
-        return json.dumps(data), status_code, {'Content-Type': 'application/json'}
-    elif isinstance(data, str):
-        return data.encode('utf-8'), status_code, {'Content-Type': 'text/html'}
-
+logger = get_logger(__name__)
 
 HOOK_PAGE = """<!DOCTYPE html>
 <html lang="es">
@@ -67,6 +51,59 @@ HOOK_PAGE = """<!DOCTYPE html>
     </div>
   </body>
 </html>"""
+
+
+def jsonify(data: Union[Dict, str], status_code: int) -> Tuple:
+    """
+    Converts the given data to a JSON response with the specified status code.
+
+    Args:
+        data (Union[Dict, str]): The data to be converted to JSON. It can be a dictionary or a string.
+        status_code (int): The HTTP status code to be returned with the response.
+
+    Returns:
+        Tuple: A tuple containing the JSON response, the status code, and the headers.
+    """
+
+    if isinstance(data, dict):
+        return json.dumps(data), status_code, {'Content-Type': 'application/json'}
+    elif isinstance(data, str):
+        return data.encode('utf-8'), status_code, {'Content-Type': 'text/html'}
+
+
+def get_long_lived_token(app_id: str, app_secret: str, short_lived_token: str, save_env: Optional[bool] = False) -> Optional[str]:
+    """
+    Obtains a long-lived access token using the provided short-lived token.
+
+    Args:
+        app_id (str): The application ID.
+        app_secret (str): The application secret.
+        short_lived_token (str): The short-lived page access token.
+        save_env (Optional[bool], optional): Whether to save the long-lived token to the .env file. Defaults to False.
+
+    Returns:
+        Optional[str]: The long-lived access token if successful, otherwise None.
+    
+    Exception:
+        RequestException: If an error occurs during the request.
+    
+    Example:
+        >>> get_long_lived_token('765xxx', 'e0fcxxx', 'EAAK4AXXXX', True)
+        "EAAK4XXXX"
+    """
+
+    url = f"https://graph.facebook.com/v20.0/oauth/access_token?grant_type=fb_exchange_token&client_id={app_id}&client_secret={app_secret}&fb_exchange_token={short_lived_token}"
+    try:
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        logger.info("Long-lived token obtained successfully - %d", 200)
+        if save_env:
+            with open('.env', 'a', encoding='utf-8') as file:
+                file.write(f'\nACCESS_TOKEN={r.json()["access_token"]}')
+        return r.json()['access_token']
+    except RequestException as e:
+        logger.error("%s - %d", e, 403)
+        return None
 
 
 class Messenger():
