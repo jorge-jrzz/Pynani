@@ -1,6 +1,8 @@
 from typing import Optional, Union, List, Dict
-from .logs import logger
+from .logs import get_logger
 
+
+logger = get_logger(__name__)
 
 def __make_quick_button(text: Union[str, int], image_url: Optional[str] = None) -> Dict:
     """
