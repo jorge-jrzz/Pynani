@@ -1,40 +1,41 @@
-[build-system]
-build-backend = "setuptools.build_meta"
-requires = ["setuptools >= 61.0", "wheel"]
-
 [project]
+name = "pynani"
+version = "1.4.2"
+description = "Open source python wrapper to Messenger API"
 authors = [
-  {name = "Jorge Juarez", email = "jorgeang33@gmail.com"},
+  {name = "Jorge Juárez", email = "jorgeang33@gmail.com"},
 ]
+keywords = ["Messenger", "wrapper", "Meta", "API", "Facebook", "Pynani"]
+readme = "README.md"
+license = {file = "LICENSE"}
 classifiers = [
   "Intended Audience :: Developers",
   "Intended Audience :: Customer Service",
-  "Topic :: Software Development :: Build Tools",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "License :: OSI Approved :: MIT License",
   "Topic :: Communications :: Chat",
   "Topic :: Software Development :: Libraries :: Python Modules",
-  "Topic :: Software Development :: Version Control :: Git",
-  "Topic :: Utilities",
-  "Topic :: Documentation :: Sphinx",
-  "License :: OSI Approved :: MIT License", 
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.14",
 ]
+requires-python = ">=3.12, <4.0"
+
 dependencies = [
-  "requests>=2.32.3",
-  "colorlog>=6.8.2",
+    "colorlog>=6.10.1",
+    "requests>=2.33.1",
 ]
-description = "A package to wrap the Messenger API"
-keywords = ["Messenger", "wrapper", "Meta", "API", "Facebook", "Pynani", "PyMessenger"]
-license = {file = "LICENSE"}
-name = "pynani"
-readme = "README.md"
-requires-python = ">=3.10"
-version = "1.4.0"
+
+[dependency-groups]
+docs = [
+    "sphinx>=9.1.0",
+    "sphinx-book-theme>=1.2.0",
+    "sphinx-copybutton>=0.5.2",
+]
 
 [project.urls]
-"Bug Tracker" = "https://github.com/jorge-jrzz/Pynani/issues"
-Repository = "https://github.com/jorge-jrzz/Pynani"
+"Bug Tracker" = "https://github.com/jorge-jrzz/pynani/issues"
+Repository = "https://github.com/jorge-jrzz/pynani"
+Documentation = "https://pynani-docs.readthedocs.io/en/latest/"
+
+[build-system]
+requires = ["uv_build>=0.9.25,<0.10.0"]
+build-backend = "uv_build"
