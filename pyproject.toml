@@ -31,6 +31,17 @@ docs = [
     "sphinx-copybutton>=0.5.2",
 ]
 
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
 [project.urls]
 "Bug Tracker" = "https://github.com/jorge-jrzz/pynani/issues"
 Repository = "https://github.com/jorge-jrzz/pynani"
