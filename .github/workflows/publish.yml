@@ -1,8 +1,10 @@
 name: "Publish package in PyPi"
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      # Publish on any tag starting with a `v`
+      - v*
 
 jobs:
   run:
